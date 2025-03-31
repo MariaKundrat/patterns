@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 require("reflect-metadata");
 const { AppDataSource } = require("../data-source");
-const { courseController } = require("./config/container");
+const { courseController, userController } = require("./config/container");
 
 dotenv.config();
 
@@ -11,6 +11,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use("/api/courses", courseController.getRouter());
+app.use("/api/users", userController.getRouter());
 
 AppDataSource.initialize()
     .then(() => {

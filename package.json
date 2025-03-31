@@ -6,6 +6,8 @@
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
         "import-csv": "node import-csv.js",
+        "import-users": "node import-users.js",
+        "import-all-csv": "node import-all-csv.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],

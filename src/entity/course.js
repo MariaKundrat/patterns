@@ -22,4 +22,35 @@ module.exports = new EntitySchema({
             type: "float",
         },
     },
+    relations: {
+        instructors: {
+            type: "many-to-many",
+            target: "Instructor",
+            inverseSide: "listOfCourses",
+            joinTable: true,
+            cascade: true,
+        },
+        deadlines: {
+            type: "one-to-many",
+            target: "Deadline",
+            inverseSide: "course",
+            cascade: true,
+        },
+        reviews: {
+            type: "one-to-many",
+            target: "Review",
+            inverseSide: "course",
+            cascade: true,
+        },
+        users: {
+            type: "many-to-many",
+            target: "User",
+            inverseSide: "courses",
+        },
+        specialization: {
+            type: "many-to-one",
+            target: "Specialization",
+            inverseSide: "courses",
+        },
+    },
 });

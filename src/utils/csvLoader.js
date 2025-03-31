@@ -1,29 +1,53 @@
-const fs = require("fs");
-const csv = require("csv-parser");
-const courseService = require("../service/courseService");
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
+const CourseService = require('../service/courseService');
+const UserService = require('../service/userService');
 
-const loadCSV = async (filePath) => {
+async function loadCSV(filePath) {
     return new Promise((resolve, reject) => {
         const results = [];
+        const fileName = path.basename(filePath);
 
         fs.createReadStream(filePath)
             .pipe(csv())
-            .on("data", (data) => {
-                results.push({
-                    name: data.name,
-                    description: data.description,
-                    time: parseFloat(data.time),
-                    rating: parseFloat(data.rating),
-                });
-            })
-            .on("end", async () => {
-                for (const course of results) {
-                    await courseService.createCourse(course);
+            .on('data', (data) => results.push(data))
+            .on('end', async () => {
+                try {
+                    const courseService = new CourseService();
+                    const userService = new UserService();
+
+                    if (fileName.includes('users')) {
+                        console.log('Імпортуємо користувачів...');
+                        for (const row of results) {
+                            await userService.createUser({
+                                name: row.name,
+                                description: row.description,
+                                time: row.time,
+                                rating: row.rating,
+                            });
+                        }
+                        console.log(`Імпортовано ${results.length} користувачів`);
+                    } else {
+                        console.log('Імпортуємо курси...');
+                        for (const row of results) {
+                            await courseService.createCourse({
+                                name: row.name,
+                                description: row.description || 'Опис відсутній',
+                                time: parseFloat(row.time) || 0,
+                                rating: parseFloat(row.rating) || 0
+                            });
+                        }
+                        console.log(`Імпортовано ${results.length} курсів`);
+                    }
+                    resolve();
+                } catch (error) {
+                    reject(error);
                 }
-                console.log(`Imported ${results.length} courses`);
-                resolve();
             })
-            .on("error", reject);
+            .on('error', (error) => {
+                reject(error);
+            });
     });
 };
 
