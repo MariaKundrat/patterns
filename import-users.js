@@ -5,7 +5,7 @@ const { AppDataSource } = require("./data-source");
 const loadUsersFromCSV = require("./src/utils/userCsvLoader");
 
 const UserRepository = require("./src/repository/userRepository");
-const UserService = require("./src/service/userService");
+const UserService = require("./src/bussines_logic/services/userService");
 
 const userRepo = new UserRepository();
 const userService = new UserService(userRepo);

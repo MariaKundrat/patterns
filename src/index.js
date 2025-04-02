@@ -1,23 +1,28 @@
-const express = require("express");
-const dotenv = require("dotenv");
-require("reflect-metadata");
-const { AppDataSource } = require("../data-source");
-const { courseController, userController } = require("./config/container");
+const path = require('path');
+const { initializeDatabase } = require('./utils/database-init');
+const { dataImportService } = require('./business-logic/services');
 
-dotenv.config();
+const main = async () => {
+    try {
+        console.log('Initializing database...');
+        const dbInitialized = await initializeDatabase();
+        if (!dbInitialized) {
+            console.error('Failed to initialize database. Exiting...');
+            process.exit(1);
+        }
 
-const app = express();
-const port = process.env.PORT || 3000;
+        console.log('Importing data from CSV...');
+        const csvFilePath = path.join(__dirname, '../data/courseraData.csv');
+        await dataImportService.importDataFromCsv(csvFilePath);
 
-app.use(express.json());
-app.use("/api/courses", courseController.getRouter());
-app.use("/api/users", userController.getRouter());
+        console.log('Application initialization completed successfully.');
+    } catch (error) {
+        console.error('Error during application initialization:', error);
+    }
+};
 
-AppDataSource.initialize()
-    .then(() => {
-        console.log("Data Source has been initialized!");
-        app.listen(port, () => console.log(`Server running on port ${port}`));
-    })
-    .catch((err) => {
-        console.error("Error during Data Source initialization:", err);
-    });
+if (require.main === module) {
+    main();
+}
+
+module.exports = { main };

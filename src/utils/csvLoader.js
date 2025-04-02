@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const CourseService = require('../service/courseService');
-const UserService = require('../service/userService');
+const CourseService = require('../business_logic/services/courseService');
+const UserService = require('../business_logic/services/userService');
 
 async function loadCSV(filePath) {
     return new Promise((resolve, reject) => {
