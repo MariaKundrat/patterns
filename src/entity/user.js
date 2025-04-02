@@ -11,10 +11,12 @@ module.exports = new EntitySchema({
         },
         name: {
             type: "varchar",
+            nullable: false,
         },
         email: {
             type: "varchar",
             unique: true,
+            nullable: false,
         },
     },
     relations: {

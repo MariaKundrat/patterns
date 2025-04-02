@@ -11,9 +11,11 @@ module.exports = new EntitySchema({
         },
         name: {
             type: "varchar",
+            nullable: false,
         },
         description: {
             type: "text",
+            nullable: true,
         },
     },
     relations: {
@@ -21,6 +23,7 @@ module.exports = new EntitySchema({
             type: "one-to-many",
             target: "Course",
             inverseSide: "specialization",
+            cascade: true,
         },
     },
 });

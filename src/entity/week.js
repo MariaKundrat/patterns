@@ -11,6 +11,7 @@ module.exports = new EntitySchema({
         },
         topic: {
             type: "varchar",
+            nullable: false,
         },
     },
     relations: {

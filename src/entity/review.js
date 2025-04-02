@@ -11,12 +11,15 @@ module.exports = new EntitySchema({
         },
         rating: {
             type: "int",
+            nullable: false,
         },
         date: {
             type: "date",
+            nullable: false,
         },
         text: {
             type: "text",
+            nullable: true,
         },
     },
     relations: {
@@ -24,11 +27,15 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "User",
             inverseSide: "reviews",
+            nullable: false,
+            onDelete: "CASCADE",
         },
         course: {
             type: "many-to-one",
             target: "Course",
             inverseSide: "reviews",
+            nullable: false,
+            onDelete: "CASCADE",
         },
     },
 });

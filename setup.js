@@ -1,5 +1,5 @@
 const path = require('path');
-const { generateCsvData } = require('./data-generator/generator');
+const { generateCsvData } = require('./data_generator/generator');
 const { main } = require('./index');
 
 const runSetup = async () => {
@@ -24,7 +24,10 @@ const runSetup = async () => {
 };
 
 if (require.main === module) {
-    runSetup();
+    runSetup().catch((error) => {
+        console.error('Unhandled error during setup:', error);
+        process.exit(1);
+    });
 }
 
 module.exports = { runSetup };

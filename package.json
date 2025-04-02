@@ -3,11 +3,12 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
+        "generate-csv": "node src/data_generator/generator.js",
+        "init-db": "node src/utils/database-init.js",
+        "import-data": "node src/index.js",
+        "setup": "node src/setup.js",
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
-        "import-csv": "node import-csv.js",
-        "import-users": "node import-users.js",
-        "import-all-csv": "node import-all-csv.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],
@@ -16,10 +17,12 @@
     "description": "",
     "dependencies": {
         "csv-parser": "^3.2.0",
+        "csv-writer": "^1.6.0",
         "dotenv": "^16.5.0",
         "express": "^5.1.0",
         "pg": "^8.14.1",
         "reflect-metadata": "^0.2.2",
+        "sequelize": "^6.37.7",
         "typeorm": "^0.3.22"
     },
     "devDependencies": {

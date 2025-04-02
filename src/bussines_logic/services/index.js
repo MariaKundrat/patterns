@@ -1,8 +1,6 @@
 const {
     userRepository,
     subscriptionRepository,
-    freeSubscriptionRepository,
-    paidSubscriptionRepository,
     instructorRepository,
     courseRepository,
     specializationRepository,
@@ -13,8 +11,8 @@ const {
     csvDataLoader
 } = require('../../data-access/repositories');
 
-const UserService = require('./UserService');
-const CourseService = require('./CourseService');
+const UserService = require('./userService');
+const CourseService = require('./courseService');
 const DataImportService = require('./DataImportService');
 
 // Dependency Injection
@@ -24,8 +22,6 @@ const dataImportService = new DataImportService(
     csvDataLoader,
     userRepository,
     subscriptionRepository,
-    freeSubscriptionRepository,
-    paidSubscriptionRepository,
     instructorRepository,
     courseRepository,
     specializationRepository,

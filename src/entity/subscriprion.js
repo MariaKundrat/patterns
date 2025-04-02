@@ -11,7 +11,12 @@ module.exports = new EntitySchema({
         },
         type: {
             type: "varchar",
+            nullable: false,
         },
+    },
+    discriminatorColumn: {
+        name: "type",
+        type: "varchar",
     },
     discriminatorValue: "base",
 });

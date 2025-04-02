@@ -1,13 +1,10 @@
 const IDataImportService = require('../interfaces/IDataImportService');
-const path = require('path');
 
 class DataImportService extends IDataImportService {
     constructor(
         csvDataLoader,
         userRepository,
         subscriptionRepository,
-        freeSubscriptionRepository,
-        paidSubscriptionRepository,
         instructorRepository,
         courseRepository,
         specializationRepository,
@@ -20,8 +17,6 @@ class DataImportService extends IDataImportService {
         this.csvDataLoader = csvDataLoader;
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
-        this.freeSubscriptionRepository = freeSubscriptionRepository;
-        this.paidSubscriptionRepository = paidSubscriptionRepository;
         this.instructorRepository = instructorRepository;
         this.courseRepository = courseRepository;
         this.specializationRepository = specializationRepository;
@@ -32,6 +27,9 @@ class DataImportService extends IDataImportService {
     }
 
     async importDataFromCsv(filePath) {
+        const { sequelize } = require('../../config/database');
+        const transaction = await sequelize.transaction();
+
         try {
             const data = await this.csvDataLoader.loadData(filePath);
 
@@ -51,7 +49,7 @@ class DataImportService extends IDataImportService {
                     case 'user':
                         users.push({
                             name: record.name,
-                            email: record.email
+                            email: record.email,
                         });
                         break;
 
@@ -59,14 +57,14 @@ class DataImportService extends IDataImportService {
                         instructors.push({
                             name: record.name,
                             bio: record.bio,
-                            rating: parseFloat(record.rating)
+                            rating: parseFloat(record.rating),
                         });
                         break;
 
                     case 'specialization':
                         specializations.push({
                             name: record.name,
-                            description: record.description
+                            description: record.description,
                         });
                         break;
 
@@ -76,14 +74,12 @@ class DataImportService extends IDataImportService {
                             description: record.description,
                             time: parseFloat(record.time),
                             rating: parseFloat(record.rating),
-                            SpecializationId: parseInt(record.specializationId)
                         });
                         break;
 
                     case 'subscription':
                         subscriptions.push({
                             type: record.type,
-                            UserId: parseInt(record.userId)
                         });
                         break;
 
@@ -92,16 +88,12 @@ class DataImportService extends IDataImportService {
                             rating: parseInt(record.rating),
                             text: record.text,
                             date: new Date(record.date),
-                            UserId: parseInt(record.userId),
-                            CourseId: parseInt(record.courseId)
                         });
                         break;
 
                     case 'week':
                         weeks.push({
                             topic: record.topic,
-                            tasks: record.tasks,
-                            CourseId: parseInt(record.courseId)
                         });
                         break;
 
@@ -110,85 +102,64 @@ class DataImportService extends IDataImportService {
                             title: record.title,
                             description: record.description,
                             isCompleted: record.isCompleted === 'true',
-                            WeekId: parseInt(record.weekId)
                         });
                         break;
 
                     case 'deadline':
                         deadlines.push({
                             dueDate: new Date(record.dueDate),
-                            CourseId: parseInt(record.courseId)
                         });
                         break;
 
                     case 'userCourse':
                         userCourses.push({
-                            UserId: parseInt(record.userId),
-                            CourseId: parseInt(record.courseId)
+                            userId: parseInt(record.userId),
+                            courseId: parseInt(record.courseId),
                         });
                         break;
                 }
             }
 
             console.log('Importing users...');
-            await this.userRepository.bulkCreate(users);
+            await this.userRepository.bulkCreate(users, { transaction });
 
             console.log('Importing instructors...');
-            await this.instructorRepository.bulkCreate(instructors);
+            await this.instructorRepository.bulkCreate(instructors, { transaction });
 
             console.log('Importing specializations...');
-            await this.specializationRepository.bulkCreate(specializations);
+            await this.specializationRepository.bulkCreate(specializations, { transaction });
 
             console.log('Importing courses...');
-            await this.courseRepository.bulkCreate(courses);
+            await this.courseRepository.bulkCreate(courses, { transaction });
 
             console.log('Importing subscriptions...');
-            const createdSubscriptions = await this.subscriptionRepository.bulkCreate(subscriptions);
-
-            const freeSubscriptions = [];
-            const paidSubscriptions = [];
-
-            for (const subscription of createdSubscriptions) {
-                if (subscription.type === 'free') {
-                    freeSubscriptions.push({ id: subscription.id });
-                } else if (subscription.type === 'paid') {
-                    paidSubscriptions.push({ id: subscription.id });
-                }
-            }
-
-            if (freeSubscriptions.length > 0) {
-                await this.freeSubscriptionRepository.bulkCreate(freeSubscriptions);
-            }
-
-            if (paidSubscriptions.length > 0) {
-                await this.paidSubscriptionRepository.bulkCreate(paidSubscriptions);
-            }
+            await this.subscriptionRepository.bulkCreate(subscriptions, { transaction });
 
             console.log('Importing reviews...');
-            await this.reviewRepository.bulkCreate(reviews);
+            await this.reviewRepository.bulkCreate(reviews, { transaction });
 
             console.log('Importing weeks...');
-            await this.weekRepository.bulkCreate(weeks);
+            await this.weekRepository.bulkCreate(weeks, { transaction });
 
             console.log('Importing tasks...');
-            await this.taskRepository.bulkCreate(tasks);
+            await this.taskRepository.bulkCreate(tasks, { transaction });
 
             console.log('Importing deadlines...');
-            await this.deadlineRepository.bulkCreate(deadlines);
+            await this.deadlineRepository.bulkCreate(deadlines, { transaction });
 
             console.log('Setting up user-course relationships...');
 
-            const { sequelize } = require('../../config/database');
-            await sequelize.query(
-                `INSERT INTO "UserCourses" ("UserId", "CourseId", "createdAt", "updatedAt") 
-         VALUES ${userCourses.map(uc =>
-                    `(${uc.UserId}, ${uc.CourseId}, NOW(), NOW())`
-                ).join(', ')}`
-            );
+            for (const userCourse of userCourses) {
+                const user = await this.userRepository.findById(userCourse.userId, { transaction });
+                const course = await this.courseRepository.findById(userCourse.courseId, { transaction });
+                await user.addCourse(course, { transaction });
+            }
 
+            await transaction.commit();
             console.log('Data import completed successfully');
-            return true;
+
         } catch (error) {
+            await transaction.rollback();
             console.error('Error importing data:', error);
             throw error;
         }

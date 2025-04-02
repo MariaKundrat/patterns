@@ -11,6 +11,7 @@ module.exports = new EntitySchema({
         },
         dueDate: {
             type: "date",
+            nullable: false,
         },
     },
     relations: {
@@ -24,6 +25,8 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "Course",
             inverseSide: "deadlines",
+            nullable: false,
+            onDelete: "CASCADE",
         },
     },
 });

@@ -11,12 +11,16 @@ module.exports = new EntitySchema({
         },
         name: {
             type: "varchar",
+            nullable: false,
         },
         bio: {
             type: "text",
+            nullable: true,
         },
         rating: {
             type: "float",
+            nullable: false,
+            default: 0,
         },
     },
     relations: {
@@ -24,6 +28,10 @@ module.exports = new EntitySchema({
             type: "many-to-many",
             target: "Course",
             inverseSide: "instructors",
+            joinTable: {
+                name: "instructor_courses",
+            },
+            cascade: true,
         },
     },
 });

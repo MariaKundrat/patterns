@@ -11,9 +11,11 @@ module.exports = new EntitySchema({
         },
         title: {
             type: "varchar",
+            nullable: false,
         },
         description: {
             type: "text",
+            nullable: true,
         },
         isCompleted: {
             type: "boolean",
@@ -25,11 +27,15 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "Week",
             inverseSide: "tasks",
+            nullable: false,
+            onDelete: "CASCADE",
         },
         deadline: {
             type: "many-to-one",
             target: "Deadline",
             inverseSide: "tasks",
+            nullable: true,
+            onDelete: "SET NULL",
         },
     },
 });
