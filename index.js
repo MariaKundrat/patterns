@@ -14,7 +14,7 @@ const WeekRepository = require("./src/data-access/repositories/WeekRepository");
 const TaskRepository = require("./src/data-access/repositories/TaskRepository");
 const DeadlineRepository = require("./src/data-access/repositories/DeadlineRepository");
 
-const DataImportService = require("./src/business_logic/services/DataImportService");
+const DataImportService = require("./src/bussines_logic/services/DataImportService");
 
 AppDataSource.initialize()
     .then(async () => {
