@@ -25,7 +25,7 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "Course",
             inverseSide: "deadlines",
-            nullable: false,
+            nullable: true, //timely
             onDelete: "CASCADE",
         },
     },

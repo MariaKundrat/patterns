@@ -27,14 +27,14 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "User",
             inverseSide: "reviews",
-            nullable: false,
+            nullable: true, //timely
             onDelete: "CASCADE",
         },
         course: {
             type: "many-to-one",
             target: "Course",
             inverseSide: "reviews",
-            nullable: false,
+            nullable: true, //timely
             onDelete: "CASCADE",
         },
     },

@@ -33,7 +33,6 @@ module.exports = new EntitySchema({
             target: "Instructor",
             inverseSide: "listOfCourses",
             joinTable: true,
-            cascade: true,
         },
         deadlines: {
             type: "one-to-many",
@@ -59,7 +58,7 @@ module.exports = new EntitySchema({
             type: "many-to-one",
             target: "Specialization",
             inverseSide: "courses",
-            nullable: false,
+            nullable: true, //timely
             onDelete: "CASCADE",
         },
     },

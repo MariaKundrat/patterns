@@ -1,6 +1,6 @@
 const path = require('path');
 const { generateCsvData } = require('./data_generator/generator');
-const { main } = require('./index');
+const { main } = require('../index');
 
 const runSetup = async () => {
     try {

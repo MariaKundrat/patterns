@@ -2,8 +2,12 @@ const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
     name: "FreeSubscription",
-    tableName: "subscriptions",
-    extends: "Subscription",
-    columns: {},
-    discriminatorValue: "free",
+    tableName: "free_subscriptions",
+    columns: {
+        id: {
+            primary: true,
+            type: "int",
+            generated: true,
+        },
+    },
 });

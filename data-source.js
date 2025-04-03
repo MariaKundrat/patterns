@@ -6,10 +6,10 @@ const AppDataSource = new DataSource({
     host: process.env.DB_HOST || "localhost",
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     username: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASS || "postgres",
-    database: process.env.DB_NAME || "coursera_db",
+    password: process.env.DB_PASS || "1234q",
+    database: process.env.DB_NAME || "lab2db",
     dropSchema: false,
-    synchronize: false,
+    synchronize: true,
     logging: process.env.DB_LOGGING === "true",
     entities: [
         require("./src/entity/course"),

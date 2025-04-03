@@ -1,3 +1,4 @@
+const { AppDataSource } = require('../../../data-source');
 const IDataImportService = require('../interfaces/IDataImportService');
 
 class DataImportService extends IDataImportService {
@@ -27,8 +28,10 @@ class DataImportService extends IDataImportService {
     }
 
     async importDataFromCsv(filePath) {
-        const { sequelize } = require('../../config/database');
-        const transaction = await sequelize.transaction();
+        const queryRunner = AppDataSource.createQueryRunner();
+
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
         try {
             const data = await this.csvDataLoader.loadData(filePath);
@@ -74,6 +77,7 @@ class DataImportService extends IDataImportService {
                             description: record.description,
                             time: parseFloat(record.time),
                             rating: parseFloat(record.rating),
+                            specializationId: record.specializationId
                         });
                         break;
 
@@ -121,47 +125,50 @@ class DataImportService extends IDataImportService {
             }
 
             console.log('Importing users...');
-            await this.userRepository.bulkCreate(users, { transaction });
+            await queryRunner.manager.save('User', users);
 
             console.log('Importing instructors...');
-            await this.instructorRepository.bulkCreate(instructors, { transaction });
+            await queryRunner.manager.save('Instructor', instructors);
 
             console.log('Importing specializations...');
-            await this.specializationRepository.bulkCreate(specializations, { transaction });
+            await queryRunner.manager.save('Specialization', specializations);
 
             console.log('Importing courses...');
-            await this.courseRepository.bulkCreate(courses, { transaction });
+            await queryRunner.manager.save('Course', courses);
 
             console.log('Importing subscriptions...');
-            await this.subscriptionRepository.bulkCreate(subscriptions, { transaction });
+            await queryRunner.manager.save('Subscription', subscriptions);
 
             console.log('Importing reviews...');
-            await this.reviewRepository.bulkCreate(reviews, { transaction });
+            await queryRunner.manager.save('Review', reviews);
 
             console.log('Importing weeks...');
-            await this.weekRepository.bulkCreate(weeks, { transaction });
+            await queryRunner.manager.save('Week', weeks);
 
             console.log('Importing tasks...');
-            await this.taskRepository.bulkCreate(tasks, { transaction });
+            await queryRunner.manager.save('Task', tasks);
 
             console.log('Importing deadlines...');
-            await this.deadlineRepository.bulkCreate(deadlines, { transaction });
+            await queryRunner.manager.save('Deadline', deadlines);
 
             console.log('Setting up user-course relationships...');
 
             for (const userCourse of userCourses) {
-                const user = await this.userRepository.findById(userCourse.userId, { transaction });
-                const course = await this.courseRepository.findById(userCourse.courseId, { transaction });
-                await user.addCourse(course, { transaction });
+                const user = await queryRunner.manager.findOne('User', { where: { id: userCourse.userId } });
+                const course = await queryRunner.manager.findOne('Course', { where: { id: userCourse.courseId } });
+                user.courses = [...(user.courses || []), course];
+                await queryRunner.manager.save('User', user);
             }
 
-            await transaction.commit();
+            await queryRunner.commitTransaction();
             console.log('Data import completed successfully');
 
         } catch (error) {
-            await transaction.rollback();
+            await queryRunner.rollbackTransaction();
             console.error('Error importing data:', error);
             throw error;
+        } finally {
+            await queryRunner.release();
         }
     }
 }

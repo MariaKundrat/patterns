@@ -1,4 +1,5 @@
 const {
+    csvDataLoader,
     userRepository,
     subscriptionRepository,
     instructorRepository,
@@ -8,7 +9,6 @@ const {
     weekRepository,
     taskRepository,
     deadlineRepository,
-    csvDataLoader
 } = require('../../data-access/repositories');
 
 const UserService = require('./userService');
