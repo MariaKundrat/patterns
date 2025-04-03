@@ -1,5 +1,4 @@
-const { AppDataSource } = require('../../../data-source');
-const IDataImportService = require('../interfaces/IDataImportService');
+const IDataImportService = require("../interfaces/IDataImportService");
 
 class DataImportService extends IDataImportService {
     constructor(
@@ -28,147 +27,106 @@ class DataImportService extends IDataImportService {
     }
 
     async importDataFromCsv(filePath) {
-        const queryRunner = AppDataSource.createQueryRunner();
+        const data = await this.csvDataLoader.loadData(filePath);
 
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+        const users = [];
+        const instructors = [];
+        const specializations = [];
+        const courses = [];
+        const subscriptions = [];
+        const reviews = [];
+        const weeks = [];
+        const tasks = [];
+        const deadlines = [];
+        const userCourses = [];
 
-        try {
-            const data = await this.csvDataLoader.loadData(filePath);
-
-            const users = [];
-            const instructors = [];
-            const specializations = [];
-            const courses = [];
-            const subscriptions = [];
-            const reviews = [];
-            const weeks = [];
-            const tasks = [];
-            const deadlines = [];
-            const userCourses = [];
-
-            for (const record of data) {
-                switch (record.recordType) {
-                    case 'user':
-                        users.push({
-                            name: record.name,
-                            email: record.email,
-                        });
-                        break;
-
-                    case 'instructor':
-                        instructors.push({
-                            name: record.name,
-                            bio: record.bio,
-                            rating: parseFloat(record.rating),
-                        });
-                        break;
-
-                    case 'specialization':
-                        specializations.push({
-                            name: record.name,
-                            description: record.description,
-                        });
-                        break;
-
-                    case 'course':
+        for (const record of data) {
+            switch (record.recordType) {
+                case "user":
+                    users.push({ name: record.name, email: record.email });
+                    break;
+                case "instructor":
+                    instructors.push({ name: record.name, bio: record.bio, rating: parseFloat(record.rating) });
+                    break;
+                case "specialization":
+                    specializations.push({ id: parseInt(record.specializationId), name: record.name, description: record.description });
+                    break;
+                case "course":
+                    const specializationId = parseInt(record.specializationId);
+                    if (!isNaN(specializationId)) {
                         courses.push({
                             name: record.name,
                             description: record.description,
                             time: parseFloat(record.time),
                             rating: parseFloat(record.rating),
-                            specializationId: record.specializationId
+                            specialization: { id: specializationId },
                         });
-                        break;
+                    } else {
+                        console.warn(`⚠️ Skipping course with invalid specialization ID: ${record.specializationId}`);
+                    }
+                    break;
+                case "subscription":
+                    subscriptions.push({ type: record.type });
+                    break;
+                case "review":
+                    reviews.push({
+                        rating: parseInt(record.rating),
+                        text: record.text,
+                        date: new Date(record.date),
+                        user: { id: parseInt(record.userId) },
+                        course: { id: parseInt(record.courseId) }
+                    });
+                    break;
+                case "week":
+                    weeks.push({ topic: record.topic, tasks: record.tasks, course: { id: parseInt(record.courseId) } });
+                    break;
+                case "task":
+                    tasks.push({
+                        title: record.title,
+                        description: record.description,
+                        isCompleted: record.isCompleted === "true",
+                        week: { id: parseInt(record.weekId) }
+                    });
+                    break;
+                case "deadline":
+                    deadlines.push({
+                        dueDate: new Date(record.dueDate),
+                        course: { id: parseInt(record.courseId) }
+                    });
+                    break;
+                case "userCourse":
+                    userCourses.push({ userId: parseInt(record.userId), courseId: parseInt(record.courseId) });
 
-                    case 'subscription':
-                        subscriptions.push({
-                            type: record.type,
-                        });
-                        break;
-
-                    case 'review':
-                        reviews.push({
-                            rating: parseInt(record.rating),
-                            text: record.text,
-                            date: new Date(record.date),
-                        });
-                        break;
-
-                    case 'week':
-                        weeks.push({
-                            topic: record.topic,
-                        });
-                        break;
-
-                    case 'task':
-                        tasks.push({
-                            title: record.title,
-                            description: record.description,
-                            isCompleted: record.isCompleted === 'true',
-                        });
-                        break;
-
-                    case 'deadline':
-                        deadlines.push({
-                            dueDate: new Date(record.dueDate),
-                        });
-                        break;
-
-                    case 'userCourse':
-                        userCourses.push({
-                            userId: parseInt(record.userId),
-                            courseId: parseInt(record.courseId),
-                        });
-                        break;
-                }
+                    for (const specialization of specializations) {
+                        if (!isNaN(specialization.id)) {
+                            const existingSpecialization = await this.specializationRepository.findById(specialization.id);
+                            if (!existingSpecialization) {
+                                await this.specializationRepository.save(specialization);
+                            }
+                        } else {
+                            console.warn(`⚠️ Skipping specialization with invalid ID: ${specialization.id}`);
+                        }
+                    }
             }
+        }
 
-            console.log('Importing users...');
-            await queryRunner.manager.save('User', users);
+        await this.userRepository.save(users);
+        await this.subscriptionRepository.save(subscriptions);
+        await this.instructorRepository.save(instructors);
+        await this.specializationRepository.save(specializations);
+        await this.courseRepository.save(courses);
+        await this.reviewRepository.save(reviews);
+        await this.weekRepository.save(weeks);
+        await this.taskRepository.save(tasks);
+        await this.deadlineRepository.save(deadlines);
 
-            console.log('Importing instructors...');
-            await queryRunner.manager.save('Instructor', instructors);
-
-            console.log('Importing specializations...');
-            await queryRunner.manager.save('Specialization', specializations);
-
-            console.log('Importing courses...');
-            await queryRunner.manager.save('Course', courses);
-
-            console.log('Importing subscriptions...');
-            await queryRunner.manager.save('Subscription', subscriptions);
-
-            console.log('Importing reviews...');
-            await queryRunner.manager.save('Review', reviews);
-
-            console.log('Importing weeks...');
-            await queryRunner.manager.save('Week', weeks);
-
-            console.log('Importing tasks...');
-            await queryRunner.manager.save('Task', tasks);
-
-            console.log('Importing deadlines...');
-            await queryRunner.manager.save('Deadline', deadlines);
-
-            console.log('Setting up user-course relationships...');
-
-            for (const userCourse of userCourses) {
-                const user = await queryRunner.manager.findOne('User', { where: { id: userCourse.userId } });
-                const course = await queryRunner.manager.findOne('Course', { where: { id: userCourse.courseId } });
+        for (const uc of userCourses) {
+            const user = await this.userRepository.findById(uc.userId);
+            const course = await this.courseRepository.findById(uc.courseId);
+            if (user && course) {
                 user.courses = [...(user.courses || []), course];
-                await queryRunner.manager.save('User', user);
+                await this.userRepository.save(user);
             }
-
-            await queryRunner.commitTransaction();
-            console.log('Data import completed successfully');
-
-        } catch (error) {
-            await queryRunner.rollbackTransaction();
-            console.error('Error importing data:', error);
-            throw error;
-        } finally {
-            await queryRunner.release();
         }
     }
 }

@@ -4,9 +4,7 @@ class IDataImportService {
      * @param {string} filePath
      * @returns {Promise<void>}
      */
-    async importDataFromCsv(filePath) {
-        throw new Error('Method not implemented');
-    }
+    async importDataFromCsv(filePath) { }
 }
 
 module.exports = IDataImportService;
