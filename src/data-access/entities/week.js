@@ -8,12 +8,4 @@ module.exports = new EntitySchema({
         topic: { type: "varchar", nullable: false },
         tasks: { type: "text", nullable: true }
     },
-    relations: {
-        course: {
-            type: "many-to-one",
-            target: "Course",
-            inverseSide: "weeks",
-            onDelete: "CASCADE"
-        }
-    }
 });

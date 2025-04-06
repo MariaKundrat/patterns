@@ -3,12 +3,9 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "generate-csv": "node src/data_generator/generator.js",
-        "init-db": "node src/utils/database-init.js",
-        "import-data": "node src/index.js",
-        "setup": "node src/setup.js",
-        "dev": "nodemon src/index.js",
-        "start": "node src/index.js",
+        "generate-csv": "node src/data_generator/generateCsv.js",
+        "dev": "nodemon index.js",
+        "start": "node index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],

@@ -9,11 +9,4 @@ module.exports = new EntitySchema({
         bio: { type: "text", nullable: true },
         rating: { type: "float", nullable: false, default: 0 }
     },
-    relations: {
-        listOfCourses: {
-            type: "many-to-many",
-            target: "Course",
-            inverseSide: "instructors"
-        }
-    }
 });

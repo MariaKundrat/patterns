@@ -43,17 +43,37 @@ class DataImportService extends IDataImportService {
         for (const record of data) {
             switch (record.recordType) {
                 case "user":
-                    users.push({ name: record.name, email: record.email });
+                    if (record.name && record.email) {
+                        users.push({ name: record.name, email: record.email });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid user record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "instructor":
-                    instructors.push({ name: record.name, bio: record.bio, rating: parseFloat(record.rating) });
+                    if (record.name && record.bio && !isNaN(parseFloat(record.rating))) {
+                        instructors.push({
+                            name: record.name,
+                            bio: record.bio,
+                            rating: parseFloat(record.rating)
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid instructor record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "specialization":
-                    specializations.push({ id: parseInt(record.specializationId), name: record.name, description: record.description });
+                    if (!isNaN(parseInt(record.specializationId)) && record.name && record.description) {
+                        specializations.push({
+                            id: parseInt(record.specializationId),
+                            name: record.name,
+                            description: record.description
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid specialization record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "course":
                     const specializationId = parseInt(record.specializationId);
-                    if (!isNaN(specializationId)) {
+                    if (record.name && !isNaN(specializationId) && !isNaN(parseFloat(record.time)) && !isNaN(parseFloat(record.rating))) {
                         courses.push({
                             name: record.name,
                             description: record.description,
@@ -62,40 +82,85 @@ class DataImportService extends IDataImportService {
                             specialization: { id: specializationId },
                         });
                     } else {
-                        console.warn(`⚠️ Skipping course with invalid specialization ID: ${record.specializationId}`);
+                        console.warn(`⚠️ Skipping invalid course record: ${JSON.stringify(record)}`);
                     }
                     break;
                 case "subscription":
-                    subscriptions.push({ type: record.type });
+                    if (record.type === "free" || record.type === "paid") {
+                        subscriptions.push({ type: record.type });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid subscription record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "review":
-                    reviews.push({
-                        rating: parseInt(record.rating),
-                        text: record.text,
-                        date: new Date(record.date),
-                        user: { id: parseInt(record.userId) },
-                        course: { id: parseInt(record.courseId) }
-                    });
+                    const reviewUserId = parseInt(record.userId);
+                    const reviewCourseId = parseInt(record.courseId);
+                    if (
+                        !isNaN(parseInt(record.rating)) &&
+                        record.text &&
+                        !isNaN(Date.parse(record.date)) &&
+                        !isNaN(reviewUserId) &&
+                        !isNaN(reviewCourseId)
+                    ) {
+                        reviews.push({
+                            rating: parseInt(record.rating),
+                            text: record.text,
+                            date: new Date(record.date),
+                            user: { id: reviewUserId },
+                            course: { id: reviewCourseId }
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid review record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "week":
-                    weeks.push({ topic: record.topic, tasks: record.tasks, course: { id: parseInt(record.courseId) } });
+                    const weekCourseId = parseInt(record.courseId);
+                    if (record.topic && record.tasks && !isNaN(weekCourseId)) {
+                        weeks.push({
+                            topic: record.topic,
+                            tasks: record.tasks,
+                            course: { id: weekCourseId }
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid week record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "task":
-                    tasks.push({
-                        title: record.title,
-                        description: record.description,
-                        isCompleted: record.isCompleted === "true",
-                        week: { id: parseInt(record.weekId) }
-                    });
+                    const taskWeekId = parseInt(record.weekId);
+                    if (record.title && record.description && !isNaN(taskWeekId)) {
+                        tasks.push({
+                            title: record.title,
+                            description: record.description,
+                            isCompleted: record.isCompleted === "true",
+                            week: { id: taskWeekId }
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid task record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "deadline":
-                    deadlines.push({
-                        dueDate: new Date(record.dueDate),
-                        course: { id: parseInt(record.courseId) }
-                    });
+                    const deadlineCourseId = parseInt(record.courseId);
+                    if (!isNaN(Date.parse(record.dueDate)) && !isNaN(deadlineCourseId)) {
+                        deadlines.push({
+                            dueDate: new Date(record.dueDate),
+                            course: { id: deadlineCourseId }
+                        });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid deadline record: ${JSON.stringify(record)}`);
+                    }
                     break;
                 case "userCourse":
-                    userCourses.push({ userId: parseInt(record.userId), courseId: parseInt(record.courseId) });
+                    const userId = parseInt(record.userId);
+                    const courseId = parseInt(record.courseId);
+                    if (!isNaN(userId) && !isNaN(courseId)) {
+                        userCourses.push({ userId, courseId });
+                    } else {
+                        console.warn(`⚠️ Skipping invalid userCourse record: ${JSON.stringify(record)}`);
+                    }
+                    break;
+
+                default:
+                    console.warn(`⚠️ Unknown recordType: ${record.recordType}`);
 
                     for (const specialization of specializations) {
                         if (!isNaN(specialization.id)) {
@@ -110,11 +175,11 @@ class DataImportService extends IDataImportService {
             }
         }
 
-        await this.userRepository.save(users);
-        await this.subscriptionRepository.save(subscriptions);
-        await this.instructorRepository.save(instructors);
         await this.specializationRepository.save(specializations);
+        await this.instructorRepository.save(instructors);
+        await this.userRepository.save(users);
         await this.courseRepository.save(courses);
+        await this.subscriptionRepository.save(subscriptions);
         await this.reviewRepository.save(reviews);
         await this.weekRepository.save(weeks);
         await this.taskRepository.save(tasks);

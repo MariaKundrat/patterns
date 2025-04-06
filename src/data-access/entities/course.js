@@ -10,45 +10,4 @@ module.exports = new EntitySchema({
         time: { type: "float", nullable: false },
         rating: { type: "float", nullable: false, default: 0 }
     },
-    relations: {
-        instructors: {
-            type: "many-to-many",
-            target: "Instructor",
-            inverseSide: "listOfCourses",
-            joinTable: true,
-        },
-        deadlines: {
-            type: "one-to-many",
-            target: "Deadline",
-            inverseSide: "course",
-            cascade: true,
-        },
-        reviews: {
-            type: "one-to-many",
-            target: "Review",
-            inverseSide: "course",
-            cascade: true,
-        },
-        users: {
-            type: "many-to-many",
-            target: "User",
-            inverseSide: "courses",
-            joinTable: {
-                name: "user_courses",
-            },
-        },
-        specialization: {
-            type: "many-to-one",
-            target: "Specialization",
-            inverseSide: "courses",
-            nullable: true, //timely
-            onDelete: "CASCADE",
-        },
-        weeks: {
-            type: "one-to-many",
-            target: "Week",
-            inverseSide: "course",
-            cascade: true
-        }
-    },
 });

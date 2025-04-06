@@ -9,18 +9,4 @@ module.exports = new EntitySchema({
         date: { type: "timestamp", nullable: false },
         text: { type: "text", nullable: false }
     },
-    relations: {
-        user: {
-            type: "many-to-one",
-            target: "User",
-            inverseSide: "reviews",
-            onDelete: "CASCADE"
-        },
-        course: {
-            type: "many-to-one",
-            target: "Course",
-            inverseSide: "reviews",
-            onDelete: "CASCADE"
-        }
-    }
 });

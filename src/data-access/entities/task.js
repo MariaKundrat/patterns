@@ -9,12 +9,4 @@ module.exports = new EntitySchema({
         description: { type: "text", nullable: true },
         isCompleted: { type: "boolean", default: false }
     },
-    relations: {
-        week: {
-            type: "many-to-one",
-            target: "Week",
-            inverseSide: "tasks",
-            onDelete: "CASCADE"
-        }
-    }
 });
