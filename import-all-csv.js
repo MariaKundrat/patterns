@@ -1,47 +1,54 @@
-const fs = require('fs');
-const path = require('path');
-const { AppDataSource } = require('./data-source');
-const loadCSV = require('./src/utils/csvLoader');
+require("reflect-metadata");
+const fs = require("fs");
+const path = require("path");
+const { AppDataSource } = require("./src/config/data-source");
+const CsvDataLoader = require("./src/data-access/csv/csvDataLoader");
 
-const directoryPath = path.join(__dirname, './data');
-const filesToImport = ['data.csv', 'users.csv'];
+const directoryPath = path.join(__dirname, "src", "data_generator", "data");
+const filesToImport = ["courseraData.csv"];
 
-async function importAllFiles() {
+async function importAllCsvFiles() {
     try {
         if (!AppDataSource.isInitialized) {
-            console.log('Initializing database connection...');
+            console.log("🔄 Initializing database connection...");
             await AppDataSource.initialize();
         }
-        console.log('Database connection initialized');
+        console.log("✅ Database connection initialized");
+
+        const loader = new CsvDataLoader();
 
         for (const file of filesToImport) {
             const filePath = path.join(directoryPath, file);
+
+            if (!fs.existsSync(filePath)) {
+                console.warn(`⚠️  File not found: ${file}`);
+                continue;
+            }
+
             try {
-                if (fs.existsSync(filePath)) {
-                    console.log(`Імпортується файл: ${file}`);
-                    await loadCSV(filePath);
-                    console.log(`Successfully imported: ${file}`);
-                } else {
-                    console.log(`Файл не знайдений: ${file}`);
-                }
+                console.log(`📥 Importing file: ${file}`);
+                const data = await loader.loadData(filePath);
+                console.log(`✅ Successfully imported: ${file}, ${data.length} rows`);
             } catch (error) {
-                console.error(`Error importing ${file}:`, error.message);
+                console.error(`❌ Error importing ${file}:`, error.message);
             }
         }
     } catch (error) {
-        console.error('Error initializing database:', error.message);
+        console.error("❌ Error initializing database:", error.message);
     } finally {
         if (AppDataSource.isInitialized) {
             await AppDataSource.destroy();
-            console.log('Database connection closed');
+            console.log("🔒 Database connection closed");
         }
     }
 }
 
-importAllFiles().then(() => {
-    console.log('All imports completed');
-    process.exit(0);
-}).catch(error => {
-    console.error('Import failed:', error);
-    process.exit(1);
-});
+importAllCsvFiles()
+    .then(() => {
+        console.log("🎉 All CSV imports completed");
+        process.exit(0);
+    })
+    .catch((error) => {
+        console.error("❌ Import process failed:", error);
+        process.exit(1);
+    });
