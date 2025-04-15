@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Курси</title>
+</head>
+
+<body>
+    <h1>Список курсів</h1>
+    <ul id="courses-list"></ul>
+
+    <script>
+        async function loadCourses() {
+            const response = await fetch("/courses");
+            const data = await response.json();
+
+            const list = document.getElementById("courses-list");
+            data.forEach(course => {
+                const item = document.createElement("li");
+                item.textContent = `ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин`;
+                list.appendChild(item);
+            });
+        }
+
+        loadCourses();
+    </script>
+</body>
+
+</html>
