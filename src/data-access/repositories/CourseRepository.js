@@ -25,6 +25,15 @@ class CourseRepository extends ICourseRepository {
     async deleteById(id) {
         return this.repository.delete(id);
     }
+
+    async update(id, updatedCourseData) {
+        const course = await this.repository.findOneBy({ id });
+        if (!course) {
+            throw new Error(`Course with id ${id} not found`);
+        }
+        Object.assign(course, updatedCourseData);
+        return this.repository.save(course);
+    }
 }
 
 module.exports = CourseRepository;

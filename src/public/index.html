@@ -115,7 +115,7 @@
             list.innerHTML = "";
             data.forEach(course => {
                 const item = document.createElement("li");
-                item.innerHTML = `Add commentMore actions
+                item.innerHTML = `
                     ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин
                     <div class="button-group">
                         <button class="edit-btn" onclick="editCourse(${course.id})">Редагувати</button>
@@ -127,8 +127,7 @@
         }
 
         loadCourses();
-    </script>
-    <script>
+
         document.getElementById("add-course-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -198,6 +197,41 @@
                 alert("Не вдалося видалити курс");
             }
         }
+    </script>
+
+    <h2 align="center">Додати курс</h2>
+    <form id="add-course-form">
+        <input type="text" placeholder="Назва" name="name" required>
+        <input type="text" placeholder="Опис" name="description">
+        <input type="number" placeholder="Час (години)" name="time" step="0.1" required>
+        <input type="number" placeholder="Рейтинг" name="rating" step="0.1" required>
+        <button type="submit">Додати</button>
+    </form>
+
+    <script>
+        document.getElementById("add-course-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const course = {
+                name: formData.get("name"),
+                description: formData.get("description"),
+                time: parseFloat(formData.get("time")),
+                rating: parseFloat(formData.get("rating"))
+            };
+
+            const response = await fetch("/courses", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(course)
+            });
+
+            if (response.ok) {
+                e.target.reset();
+                loadCourses();
+            } else {
+                alert("Не вдалося додати курс");
+            }
+        });
     </script>
 </body>
 
