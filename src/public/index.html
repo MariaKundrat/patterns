@@ -4,6 +4,102 @@
 <head>
     <meta charset="UTF-8">
     <title>Курси</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            color: #003366;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1,
+        h2 {
+            color: #004080;
+        }
+
+        ul#courses-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: #e6f0ff;
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-left: 5px solid #3399ff;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li:hover {
+            background-color: #d0e7ff;
+        }
+
+        form {
+            background-color: #e6f0ff;
+            padding: 20px;
+            border-radius: 6px;
+            max-width: 400px;
+            margin: 20px auto;
+            box-shadow: 0 0 10px rgba(0, 64, 128, 0.1);
+        }
+
+        form input {
+            display: block;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 8px;
+            border: 1px solid #3399ff;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        form button {
+            background-color: #3399ff;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 104%;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        form button:hover {
+            background-color: #267acc;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            background-color: #3399ff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-btn:hover {
+            background-color: #267acc;
+        }
+
+        .delete-btn {
+            background-color: #ff3333;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc2929;
+        }
+    </style>
 </head>
 
 <body>
@@ -16,14 +112,92 @@
             const data = await response.json();
 
             const list = document.getElementById("courses-list");
+            list.innerHTML = "";
             data.forEach(course => {
                 const item = document.createElement("li");
-                item.textContent = `ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин`;
+                item.innerHTML = `Add commentMore actions
+                    ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин
+                    <div class="button-group">
+                        <button class="edit-btn" onclick="editCourse(${course.id})">Редагувати</button>
+                        <button class="delete-btn" onclick="deleteCourse(${course.id})">Видалити</button>
+                    </div>
+                `;
                 list.appendChild(item);
             });
         }
 
         loadCourses();
+    </script>
+    <script>
+        document.getElementById("add-course-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const course = {
+                name: formData.get("name"),
+                description: formData.get("description"),
+                time: parseFloat(formData.get("time")),
+                rating: parseFloat(formData.get("rating"))
+            };
+
+            const response = await fetch("/courses", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(course)
+            });
+
+            if (response.ok) {
+                e.target.reset();
+                loadCourses();
+            } else {
+                alert("Не вдалося додати курс");
+            }
+        });
+
+        async function editCourse(courseId) {
+            const course = await fetch(`/courses/${courseId}`).then(res => res.json());
+            const form = document.getElementById("add-course-form");
+            form.name.value = course.name;
+            form.description.value = course.description;
+            form.time.value = course.time;
+            form.rating.value = course.rating;
+
+            form.removeEventListener("submit", addCourseHandler);
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const updatedCourse = {
+                    name: formData.get("name"),
+                    description: formData.get("description"),
+                    time: parseFloat(formData.get("time")),
+                    rating: parseFloat(formData.get("rating"))
+                };
+
+                const response = await fetch(`/courses/${courseId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedCourse)
+                });
+
+                if (response.ok) {
+                    e.target.reset();
+                    loadCourses();
+                } else {
+                    alert("Не вдалося оновити курс");
+                }
+            });
+        }
+
+        async function deleteCourse(courseId) {
+            const response = await fetch(`/courses/${courseId}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                loadCourses();
+            } else {
+                alert("Не вдалося видалити курс");
+            }
+        }
     </script>
 </body>
 

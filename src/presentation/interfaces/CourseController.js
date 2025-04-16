@@ -30,6 +30,40 @@ module.exports = (courseService) => {
             console.error("Failed to create course:", error);
             res.status(400).json({ error: error.message });
         }
+
+        router.put("/:id", async (req, res) => {
+            try {
+                const updatedCourse = await courseService.updateCourse(req.params.id, req.body);
+                res.json(updatedCourse);
+            } catch (error) {
+                console.error("Failed to update course:", error);
+                res.status(400).json({ error: error.message });
+            }
+        });
+
+        router.delete("/:id", async (req, res) => {
+            try {
+                await courseService.deleteCourse(req.params.id);
+                res.status(204).end();
+            } catch (error) {
+                console.error("Failed to delete course:", error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
+
+        router.get("/:id", async (req, res) => {
+            try {
+                const course = await courseService.getCourseById(parseInt(req.params.id));
+                if (course) {
+                    res.json(course);
+                } else {
+                    res.status(404).json({ error: "Course not found" });
+                }
+            } catch (error) {
+                console.error("Failed to get course:", error);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        });
     });
 
     return router;
