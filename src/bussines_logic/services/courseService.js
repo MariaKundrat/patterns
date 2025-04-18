@@ -34,8 +34,9 @@ class CourseService extends ICourseService {
         if (!course) {
             throw new Error("Course not found");
         }
-        return this.courseRepository.delete(courseId);
+        return this.courseRepository.deleteById(courseId);
     }
+
 }
 
 module.exports = CourseService;

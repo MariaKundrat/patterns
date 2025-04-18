@@ -1,28 +1,18 @@
-const { AppDataSource } = require("./src/data-access/data-source");
-const entities = [
-    "Course",
-    "User",
-    "Instructor",
-    "Specialization",
-    "Subscription",
-    "Review",
-    "Week",
-    "Task",
-    "Deadline"
-];
+require("reflect-metadata");
+const { AppDataSource } = require("../config/data-source");
 
 async function clearDatabase() {
     try {
         await AppDataSource.initialize();
-        console.log("Database initialized...");
+        console.log("✅ Database initialized.");
 
-        for (const entity of entities) {
-            const repository = AppDataSource.getRepository(entity);
-            await repository.clear();
-            console.log(`Cleared table: ${entity}`);
-        }
+        const tableNames = AppDataSource.entityMetadatas.map((meta) => `"${meta.tableName}"`).join(", ");
 
-        console.log("✅ All tables are empty.");
+        await AppDataSource.query(`TRUNCATE ${tableNames} CASCADE`);
+        console.log(`🧹 Cleared all tables: ${tableNames}`);
+
+        await AppDataSource.destroy();
+        console.log("🔒 Database connection closed");
         process.exit(0);
     } catch (error) {
         console.error("❌ Database cleanup error:", error);
