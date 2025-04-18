@@ -106,99 +106,6 @@
     <h1>Список курсів</h1>
     <ul id="courses-list"></ul>
 
-    <script>
-        async function loadCourses() {
-            const response = await fetch("/courses");
-            const data = await response.json();
-
-            const list = document.getElementById("courses-list");
-            list.innerHTML = "";
-            data.forEach(course => {
-                const item = document.createElement("li");
-                item.innerHTML = `
-                    ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин
-                    <div class="button-group">
-                        <button class="edit-btn" onclick="editCourse(${course.id})">Редагувати</button>
-                        <button class="delete-btn" onclick="deleteCourse(${course.id})">Видалити</button>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        loadCourses();
-
-        document.getElementById("add-course-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const course = {
-                name: formData.get("name"),
-                description: formData.get("description"),
-                time: parseFloat(formData.get("time")),
-                rating: parseFloat(formData.get("rating"))
-            };
-
-            const response = await fetch("/courses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(course)
-            });
-
-            if (response.ok) {
-                e.target.reset();
-                loadCourses();
-            } else {
-                alert("Не вдалося додати курс");
-            }
-        });
-
-        async function editCourse(courseId) {
-            const course = await fetch(`/courses/${courseId}`).then(res => res.json());
-            const form = document.getElementById("add-course-form");
-            form.name.value = course.name;
-            form.description.value = course.description;
-            form.time.value = course.time;
-            form.rating.value = course.rating;
-
-            form.removeEventListener("submit", addCourseHandler);
-            form.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const updatedCourse = {
-                    name: formData.get("name"),
-                    description: formData.get("description"),
-                    time: parseFloat(formData.get("time")),
-                    rating: parseFloat(formData.get("rating"))
-                };
-
-                const response = await fetch(`/courses/${courseId}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(updatedCourse)
-                });
-
-                if (response.ok) {
-                    e.target.reset();
-                    loadCourses();
-                } else {
-                    alert("Не вдалося оновити курс");
-                }
-            });
-        }
-
-        async function deleteCourse(courseId) {
-            const response = await fetch(`/courses/${courseId}`, {
-                method: "DELETE"
-            });
-
-            if (response.ok) {
-                loadCourses();
-            } else {
-                alert("Не вдалося видалити курс");
-            }
-        }
-    </script>
-
     <h2 align="center">Додати курс</h2>
     <form id="add-course-form">
         <input type="text" placeholder="Назва" name="name" required>
@@ -209,7 +116,35 @@
     </form>
 
     <script>
-        document.getElementById("add-course-form").addEventListener("submit", async (e) => {
+        const form = document.getElementById("add-course-form");
+        const coursesList = document.getElementById("courses-list");
+
+        let currentEditId = null;
+
+        async function loadCourses() {
+            try {
+                const response = await fetch("/courses");
+                if (!response.ok) throw new Error("Не вдалося завантажити курси");
+                const data = await response.json();
+
+                coursesList.innerHTML = "";
+                data.forEach(course => {
+                    const item = document.createElement("li");
+                    item.innerHTML = `
+                        ID: ${course.id}, Назва: ${course.name}, Час: ${course.time} годин
+                        <div class="button-group">
+                            <button class="edit-btn" onclick="editCourse(${course.id})">Редагувати</button>
+                            <button class="delete-btn" onclick="deleteCourse(${course.id})">Видалити</button>
+                        </div>
+                    `;
+                    coursesList.appendChild(item);
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function addCourseHandler(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const course = {
@@ -219,19 +154,90 @@
                 rating: parseFloat(formData.get("rating"))
             };
 
-            const response = await fetch("/courses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(course)
-            });
+            try {
+                const response = await fetch("/courses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(course)
+                });
+                if (!response.ok) throw new Error("Не вдалося додати курс");
 
-            if (response.ok) {
                 e.target.reset();
-                loadCourses();
-            } else {
-                alert("Не вдалося додати курс");
+                await loadCourses();
+            } catch (error) {
+                alert(error.message);
             }
-        });
+        }
+
+        async function updateCourseHandler(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const updatedCourse = {
+                name: formData.get("name"),
+                description: formData.get("description"),
+                time: parseFloat(formData.get("time")),
+                rating: parseFloat(formData.get("rating"))
+            };
+
+            try {
+                const response = await fetch(`/courses/${currentEditId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedCourse)
+                });
+                if (!response.ok) throw new Error("Не вдалося оновити курс");
+
+                e.target.reset();
+                await loadCourses();
+
+                form.removeEventListener("submit", updateCourseHandler);
+                form.addEventListener("submit", addCourseHandler);
+                form.querySelector("button[type='submit']").textContent = "Додати";
+
+                currentEditId = null;
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function editCourse(courseId) {
+            try {
+                const response = await fetch(`/courses/${courseId}`);
+                if (!response.ok) throw new Error("Не вдалося отримати дані курсу");
+                const course = await response.json();
+
+                form.name.value = course.name;
+                form.description.value = course.description;
+                form.time.value = course.time;
+                form.rating.value = course.rating;
+
+                currentEditId = courseId;
+
+                form.removeEventListener("submit", addCourseHandler);
+                form.addEventListener("submit", updateCourseHandler);
+                form.querySelector("button[type='submit']").textContent = "Оновити";
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function deleteCourse(courseId) {
+            if (!confirm("Ви дійсно хочете видалити цей курс?")) return;
+
+            try {
+                const response = await fetch(`/courses/${courseId}`, {
+                    method: "DELETE"
+                });
+                if (!response.ok) throw new Error("Не вдалося видалити курс");
+
+                await loadCourses();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        loadCourses();
+        form.addEventListener("submit", addCourseHandler);
     </script>
 </body>
 
